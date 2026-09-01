@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A single bash script, `timetrap-report`, that generates a CSV time report from
 [timetrap](https://github.com/samg/timetrap) sheet data. There is no build
-system, package manifest, or test suite — the entire repo is this one
-executable file.
+system, package manifest, or test suite — the script is the only functional
+file in the repo (alongside README.md, LICENSE, and this file).
 
 ## Dependencies
 

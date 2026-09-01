@@ -65,4 +65,9 @@ Redirect stdout to save the CSV, since the progress line above is written to
 stderr:
 
 ```
-./timetrap-report --sheet acme --last-month> 2026-08.csv
+./timetrap-report --sheet acme --last-month > 2026-08.csv
+```
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE) for the full text.

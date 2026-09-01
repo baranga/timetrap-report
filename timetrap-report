@@ -1,0 +1,121 @@
+#!/bin/bash
+JQ_FILTER="
+map({
+    \"date\": .start[0:10],
+    \"start\": ((.start[0:10]) + \"T\" + (.start[11:19]) + \"Z\"),
+    \"end\": ((.end[0:10]) + \"T\" + (.end[11:19]) + \"Z\"),
+    \"note\": [.note]
+}) | map(
+    .duration = (.end | fromdateiso8601) - (.start | fromdateiso8601)
+) | reduce .[] as \$e ({};
+    .[\$e.date] = {
+        date: \$e.date,
+        duration: (.[\$e.date].duration + \$e.duration),
+        notes: ((.[\$e.date].notes // []) + \$e.note)
+    }
+) | map([
+    .date,
+    ((.duration / 36) | floor | . / 100 | tostring),
+    (.notes | unique | join(\", \"))
+]) | map(\"\\\"\" + (. | join(\"\\\",\\\"\")) + \"\\\"\") | .[]
+"
+
+require_commands() {
+    local missing=()
+    for cmd in "$@"; do
+        command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
+    done
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo "error: required command(s) not found: ${missing[*]}" 1>&2
+        exit 1
+    fi
+}
+
+find_sheet_file() {
+    local dir="$PWD"
+    while [ -n "$dir" ]; do
+        if [ -f "$dir/.timetrap-sheet" ]; then
+            echo "$dir/.timetrap-sheet"
+            return 0
+        fi
+        [ "$dir" = "/" ] && break
+        dir=$(dirname "$dir")
+    done
+    return 1
+}
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Generate a CSV time report from a timetrap sheet.
+
+Options:
+  -s, --sheet SHEET   Timetrap sheet to report on.
+                       Defaults to \$TIMETRAP_SHEET, then to the contents of
+                       a .timetrap-sheet file found in the current or a
+                       parent folder.
+      --start DATE     Start date (default: first day of last month).
+                        Can also be set via the DATE_START env var.
+      --end DATE       End date (default: last day of last month).
+                        Can also be set via the DATE_END env var.
+  -h, --help           Show this help message and exit.
+
+Environment variables:
+  TIMETRAP_SHEET  Sheet to report on (same as --sheet). Overridden by --sheet.
+  DATE_START      Start date (same as --start). Overridden by --start.
+  DATE_END        End date (same as --end). Overridden by --end.
+EOF
+}
+
+sheet="${TIMETRAP_SHEET:-}"
+date_start="${DATE_START:-}"
+date_end="${DATE_END:-}"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -s|--sheet)
+            sheet="$2"
+            shift 2
+            ;;
+        --start)
+            date_start="$2"
+            shift 2
+            ;;
+        --end)
+            date_end="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "error: unknown argument: $1" 1>&2
+            usage 1>&2
+            exit 1
+            ;;
+    esac
+done
+
+require_commands timetrap jq
+
+if [ -z "$sheet" ]; then
+    sheet_file=$(find_sheet_file)
+    if [ -n "$sheet_file" ]; then
+        sheet=$(<"$sheet_file")
+    else
+        echo "error: no sheet given and no .timetrap-sheet found in current or parent folders" 1>&2
+        exit 1
+    fi
+fi
+
+first_of_last_month="$(date --date="last month" +%Y-%m)-01"
+last_of_last_month=$(date --date="${first_of_last_month} +1month -1day" -I)
+date_start=${date_start:-$first_of_last_month}
+date_end=${date_end:-$last_of_last_month}
+
+echo "generate report $date_start - $date_end for sheet $sheet" 1>&2
+echo 'date,duration,notes'
+timetrap display --start "$date_start" --end "$date_end" --format json "$sheet" \
+| jq -r "$JQ_FILTER"

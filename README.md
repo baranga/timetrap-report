@@ -17,12 +17,22 @@ sheet, grouped by date.
 
 Options:
 
-| Flag              | Description |
-| ----------------- | ----------- |
-| `-s, --sheet SHEET` | Timetrap sheet to report on. Defaults to `$TIMETRAP_SHEET`, then to the contents of a `.timetrap-sheet` file found in the current or a parent folder. |
-| `--start DATE`      | Start date (default: first day of last month). Can also be set via `$DATE_START`. |
+| Flag                 | Description |
+| -------------------- | ----------- |
+| `-s, --sheet SHEET`  | Timetrap sheet to report on. Defaults to `$TIMETRAP_SHEET`, then to the contents of a `.timetrap-sheet` file found in the current or a parent folder. |
+| `--start DATE`       | Start date (default: first day of last month). Can also be set via `$DATE_START`. |
 | `--end DATE`         | End date (default: last day of last month). Can also be set via `$DATE_END`. |
+| `--last-month`       | Report on last month. (default) |
+| `--this-month`       | Report on this month. |
+| `--last-week`        | Report on last week (Monday-Sunday). |
+| `--this-week`        | Report on this week (Monday-Sunday). |
+| `--yesterday`        | Report on yesterday. |
 | `-h, --help`         | Show the help message and exit. |
+
+The time frame flags (`--last-month`, `--this-month`, `--last-week`,
+`--this-week`, `--yesterday`) each set both `--start` and `--end`. Flags are
+processed in order, so a `--start`/`--end` given after one of them overrides
+just that end of the range, e.g. `--this-week --end 2026-09-02`.
 
 Environment variables (overridden by the corresponding flag if given):
 
@@ -43,5 +53,16 @@ header `date,duration,notes`, one row per date in the range:
 ## Example
 
 ```
-./timetrap-report --sheet work --start 2026-01-01 --end 2026-01-31 > jan.csv
+$ ./timetrap-report --sheet acme --last-month
+generate report 2026-08-01 - 2026-08-31 for sheet acme
+date,duration,notes
+"2026-08-05","7.25","ACME-123: try to reproduce bug, ACME-456: fixing type issue"
+"2026-08-06","2.66","ACME-123: fix issue, ACME-789: review PR"
+"2026-08-08","6.5","ACME-123: review on staging, ACME-456: review on staging, Release of version 1.2.3"
 ```
+
+Redirect stdout to save the CSV, since the progress line above is written to
+stderr:
+
+```
+./timetrap-report --sheet acme --last-month> 2026-08.csv

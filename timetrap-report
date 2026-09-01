@@ -59,7 +59,16 @@ Options:
                         Can also be set via the DATE_START env var.
       --end DATE       End date (default: last day of last month).
                         Can also be set via the DATE_END env var.
+      --last-month     Report on last month. (default)
+      --this-month     Report on this month.
+      --last-week      Report on last week (Monday-Sunday).
+      --this-week      Report on this week (Monday-Sunday).
+      --yesterday      Report on yesterday.
   -h, --help           Show this help message and exit.
+
+Time frame options (--last-month, --this-month, --last-week, --this-week,
+--yesterday) set both --start and --end; a --start or --end given after one
+of them overrides just that end of the range.
 
 Environment variables:
   TIMETRAP_SHEET  Sheet to report on (same as --sheet). Overridden by --sheet.
@@ -69,8 +78,12 @@ EOF
 }
 
 sheet="${TIMETRAP_SHEET:-}"
-date_start="${DATE_START:-}"
-date_end="${DATE_END:-}"
+
+# Set default start and end to first / last day of last month
+first_of_last_month="$(date --date="last month" +%Y-%m)-01"
+last_of_last_month=$(date --date="${first_of_last_month} +1month -1day" -I)
+date_start=${DATE_START:-$first_of_last_month}
+date_end=${DATE_END:-$last_of_last_month}
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -85,6 +98,35 @@ while [ $# -gt 0 ]; do
         --end)
             date_end="$2"
             shift 2
+            ;;
+        --last-month)
+            date_start="$first_of_last_month"
+            date_end="$last_of_last_month"
+            shift
+            ;;
+        --this-month)
+            first_of_this_month="$(date +%Y-%m)-01"
+            date_start="$first_of_this_month"
+            date_end=$(date --date="${first_of_this_month} +1month -1day" -I)
+            shift
+            ;;
+        --last-week)
+            today_dow=$(date +%u)
+            this_week_monday=$(date --date="-$((today_dow - 1)) days" -I)
+            date_start=$(date --date="${this_week_monday} -7 days" -I)
+            date_end=$(date --date="${this_week_monday} -1 days" -I)
+            shift
+            ;;
+        --this-week)
+            today_dow=$(date +%u)
+            date_start=$(date --date="-$((today_dow - 1)) days" -I)
+            date_end=$(date --date="${date_start} +6 days" -I)
+            shift
+            ;;
+        --yesterday)
+            date_start=$(date --date="-1 day" -I)
+            date_end="$date_start"
+            shift
             ;;
         -h|--help)
             usage
@@ -109,11 +151,6 @@ if [ -z "$sheet" ]; then
         exit 1
     fi
 fi
-
-first_of_last_month="$(date --date="last month" +%Y-%m)-01"
-last_of_last_month=$(date --date="${first_of_last_month} +1month -1day" -I)
-date_start=${date_start:-$first_of_last_month}
-date_end=${date_end:-$last_of_last_month}
 
 echo "generate report $date_start - $date_end for sheet $sheet" 1>&2
 echo 'date,duration,notes'

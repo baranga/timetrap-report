@@ -32,7 +32,19 @@ against real (or a scratch) timetrap data:
   of a `.timetrap-sheet` file found by walking up from `$PWD` (see
   `find_sheet_file`).
 - With no `--start`/`--end`, it defaults to the first/last day of *last
-  month* relative to the system clock (`date --date="last month" ...`).
+  month* relative to the system clock (`date --date="last month" ...`),
+  computed once before the arg-parsing loop into `first_of_last_month`/
+  `last_of_last_month` and reused by both the default and the `--last-month`
+  flag.
+- The other time frame flags (`--this-month`, `--last-week`, `--this-week`,
+  `--yesterday`) each set `date_start`/`date_end` inline inside the
+  arg-parsing loop, computed via `date` at parse time. Weeks are
+  Monday-Sunday, computed from `date +%u` (ISO day-of-week) rather than GNU
+  date's `"monday this week"`-style phrases, which are inconsistent about
+  which week they resolve to — verify with `date -d ... +%A` before changing
+  this logic. Because flags are processed left-to-right in the same loop as
+  `--start`/`--end`, a `--start`/`--end` given after a time frame flag
+  overrides just that end of the range.
 - Progress/config info (`generate report ... for sheet ...`) goes to stderr;
   only the CSV (header `date,duration,notes` plus rows) goes to stdout — this
   split matters if you change output and want to keep it pipeable.

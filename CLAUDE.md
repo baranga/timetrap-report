@@ -36,9 +36,9 @@ against real (or a scratch) timetrap data:
   computed once before the arg-parsing loop into `first_of_last_month`/
   `last_of_last_month` and reused by both the default and the `--last-month`
   flag.
-- The other time frame flags (`--this-month`, `--last-week`, `--this-week`,
-  `--yesterday`) each set `date_start`/`date_end` inline inside the
-  arg-parsing loop, computed via `date` at parse time. Weeks are
+- The other time frame flags (`--this-month`, `--month`, `--last-week`,
+  `--this-week`, `--yesterday`) each set `date_start`/`date_end` inline
+  inside the arg-parsing loop, computed via `date` at parse time. Weeks are
   Monday-Sunday, computed from `date +%u` (ISO day-of-week) rather than GNU
   date's `"monday this week"`-style phrases, which are inconsistent about
   which week they resolve to — verify with `date -d ... +%A` before changing

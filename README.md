@@ -24,15 +24,17 @@ Options:
 | `--end DATE`         | End date (default: last day of last month). Can also be set via `$DATE_END`. |
 | `--last-month`       | Report on last month. (default) |
 | `--this-month`       | Report on this month. |
+| `-m, --month MONTH`  | Report on the given month, as `YYYY-MM`. |
 | `--last-week`        | Report on last week (Monday-Sunday). |
 | `--this-week`        | Report on this week (Monday-Sunday). |
 | `--yesterday`        | Report on yesterday. |
 | `-h, --help`         | Show the help message and exit. |
 
-The time frame flags (`--last-month`, `--this-month`, `--last-week`,
-`--this-week`, `--yesterday`) each set both `--start` and `--end`. Flags are
-processed in order, so a `--start`/`--end` given after one of them overrides
-just that end of the range, e.g. `--this-week --end 2026-09-02`.
+The time frame flags (`--last-month`, `--this-month`, `--month`,
+`--last-week`, `--this-week`, `--yesterday`) each set both `--start` and
+`--end`. Flags are processed in order, so a `--start`/`--end` given after one
+of them overrides just that end of the range, e.g.
+`--this-week --end 2026-09-02`.
 
 Environment variables (overridden by the corresponding flag if given):
 

@@ -77,14 +77,15 @@ Options:
                         Can also be set via the DATE_END env var.
       --last-month     Report on last month. (default)
       --this-month     Report on this month.
+  -m, --month MONTH    Report on the given month, as YYYY-MM.
       --last-week      Report on last week (Monday-Sunday).
       --this-week      Report on this week (Monday-Sunday).
       --yesterday      Report on yesterday.
   -h, --help           Show this help message and exit.
 
-Time frame options (--last-month, --this-month, --last-week, --this-week,
---yesterday) set both --start and --end; a --start or --end given after one
-of them overrides just that end of the range.
+Time frame options (--last-month, --this-month, --month, --last-week,
+--this-week, --yesterday) set both --start and --end; a --start or --end
+given after one of them overrides just that end of the range.
 
 Environment variables:
   TIMETRAP_SHEET  Sheet to report on (same as --sheet). Overridden by --sheet.
@@ -125,6 +126,15 @@ while [ $# -gt 0 ]; do
             date_start="$first_of_this_month"
             date_end=$(date --date="${first_of_this_month} +1month -1day" -I)
             shift
+            ;;
+        -m|--month)
+            if [[ ! "$2" =~ ^[0-9]{4}-(0[1-9]|1[0-2])$ ]]; then
+                echo "error: invalid month '$2', expected YYYY-MM" 1>&2
+                exit 1
+            fi
+            date_start="$2-01"
+            date_end=$(date --date="${date_start} +1month -1day" -I)
+            shift 2
             ;;
         --last-week)
             today_dow=$(date +%u)
